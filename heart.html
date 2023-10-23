@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smooth Heart Expansion and Contraction</title>
+    <style>
+      /* General styles */
+      body {
+        background-color: #121212; /* Dark background */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+
+      #labelBpmInput {
+        color: white;
+      }
+
+      canvas {
+        border: 2px solid #fff; /* White border */
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="cartesian-plane" width="400" height="400"></canvas>
+    <label id="labelBpmInput" for="bpmInput">BPM:</label>
+    <input type="number" id="bpmInput" min="1" max="240" step="1" value="60" />
+    <button onclick="updateInterval()">Update BPM</button>
+    <script>
+      // Function to create the Cartesian plane
+      function createCartesianPlane() {
+        const canvas = document.getElementById("cartesian-plane");
+        const ctx = canvas.getContext("2d");
+
+        // Configure color palette for the Cartesian plane
+        ctx.strokeStyle = "#ccc"; // Gray
+        ctx.lineWidth = 1;
+
+        // Draw vertical lines
+        for (let x = 0; x < canvas.width; x += 20) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvas.height);
+          ctx.stroke();
+        }
+
+        // Draw horizontal lines
+        for (let y = 0; y < canvas.height; y += 20) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        }
+
+        // Draw x and y axes
+        ctx.strokeStyle = "#fff"; // White
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2, 0);
+        ctx.lineTo(canvas.width / 2, canvas.height);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.stroke();
+      }
+
+      // Function to draw lines between coordinates
+      function drawLines(coordinates) {
+        const canvas = document.getElementById("cartesian-plane");
+        const ctx = canvas.getContext("2d");
+
+        // Configure color palette for lines
+        ctx.strokeStyle = "#ff0000"; // Red
+        ctx.lineWidth = 3;
+
+        ctx.beginPath();
+
+        // Iterate through the coordinates matrix and draw lines
+        for (const [x, y] of coordinates) {
+          const centerX = canvas.width / 2;
+          const centerY = canvas.height / 2;
+          const pointX = centerX + x * 20;
+          const pointY = centerY - y * 20; // Negative y-coordinate
+          ctx.lineTo(pointX, pointY);
+        }
+
+        // Finish the path and draw the lines
+        ctx.stroke();
+      }
+
+      const heartShape = [
+        [0, 1],
+        [1, 2],
+        [2, 2],
+        [3, 1],
+        [3, 0],
+        [0, -3],
+        [-3, 0],
+        [-3, 1],
+        [-2, 2],
+        [-1, 2],
+        [0, 1],
+      ];
+
+      function animate() {
+        const canvas = document.getElementById("cartesian-plane");
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        createCartesianPlane();
+
+        if (expanding) {
+          scaleFactor += 0.01; // Increase the scale factor
+          if (scaleFactor >= 1.2) {
+            expanding = false;
+          }
+        } else {
+          scaleFactor -= 0.01; // Decrease the scale factor
+          if (scaleFactor <= 1) {
+            expanding = true;
+          }
+        }
+
+        // Expansion: multiply the coordinates by the scale factor
+        const expandedCoordinates = heartShape.map(([x, y]) => [
+          x * scaleFactor,
+          y * scaleFactor,
+        ]);
+
+        // Call the function to draw lines of the expanded coordinates
+        drawLines(expandedCoordinates);
+
+        if (!expanding && scaleFactor <= 1) {
+          clearInterval(animationIntervalId); // Stop the animation when it's completed
+        }
+      }
+
+      let scaleFactor = 1;
+      let expanding = true;
+      let animationIntervalId;
+      // Start the animation with an interval of 16ms (approximately 60 frames per second)
+      animationIntervalId = setInterval(animate, 25);
+      function updateInterval() {
+        const bpmInput = document.getElementById("bpmInput");
+        const bpm = parseInt(bpmInput.value, 10);
+
+        // Calculate the interval based on BPM
+        const interval = (25 * 60) / bpm; // To accommodate 40 iterations per animation cycle, we calculate (25 * 60) to represent 60,000 ms (1 minute) divided by BPM.
+        // Clear the previous interval, if any
+        clearInterval(animationIntervalId);
+
+        // Set the new interval
+        animationIntervalId = setInterval(animate, interval);
+      }
+    </script>
+  </body>
+</html>
